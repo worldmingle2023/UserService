@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-runtime: python311
-
+runtime: python39
+entrypoint: uwsgi --http :8080 --wsgi-file main.py --callable app --master --processes 4 --threads 2
+env_variables:
+  FLASK_APP: "main"
 handlers:
   # This configures Google App Engine to serve the files in the app's static
   # directory.

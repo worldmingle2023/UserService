@@ -6,3 +6,4 @@ Werkzeug==2.0.3
 oauthlib==3.0.1
 pyOpenSSL==23.3.0
 Flask-Login==0.4.1
+uwsgi==2.0.20
