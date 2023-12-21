@@ -16,7 +16,6 @@ runtime: python39
 entrypoint: uwsgi --http :8080 --wsgi-file main.py --callable app --master --processes 4 --threads 2
 env_variables:
   FLASK_APP: "main"
-  MONGO_URI: "mongodb+srv://worldmingle:DNPaDpLxMq1GG9M2@cluster0.fhm0ifk.mongodb.net/?retryWrites=true&w=majority"
 includes:
   - env_variables.yaml
 handlers:
