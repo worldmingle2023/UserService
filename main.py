@@ -20,10 +20,10 @@ from db import init_db_command
 from user import User
 
 # Configuration
-# GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", None)
-GOOGLE_CLIENT_ID = "26579381633-husdq5e35h11emga20266e3ou55dfobp.apps.googleusercontent.com"
-# GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", None)
-GOOGLE_CLIENT_SECRET = "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"
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", None)
+# GOOGLE_CLIENT_ID = 
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", None)
+
 GOOGLE_DISCOVERY_URL = (
     "https://accounts.google.com/.well-known/openid-configuration"
 )
