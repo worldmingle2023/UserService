@@ -4,7 +4,7 @@ import os
 import sqlite3
 
 # Third-party libraries
-from flask import Flask, redirect, request, url_for
+from flask import Flask, jsonify, redirect, request, url_for
 from flask_login import (
     LoginManager,
     current_user,
@@ -153,6 +153,35 @@ def callback():
     # Send user back to homepage
     return redirect(url_for("index"))
 
+# Update the user information
+@app.route("/user/<user_id>", methods=["PUT"])
+@login_required
+def update_user(user_id):
+    if current_user.id != user_id:
+        return jsonify({"error": "Permission denied"}), 403
+
+    # Get the updated information from the request
+    data = request.get_json()
+    name = data.get("name")
+    email = data.get("email")
+    profile_pic = data.get("profile_pic")
+
+    # Update the user information in the database
+    User.update(user_id, name, email, profile_pic)
+
+    return jsonify({"message": "User updated successfully"}), 200
+
+# Delete the user
+@app.route("/user/<user_id>", methods=["DELETE"])
+@login_required
+def delete_user(user_id):
+    if current_user.id != user_id:
+        return jsonify({"error": "Permission denied"}), 403
+
+    # Delete the user from the database
+    User.delete(user_id)
+
+    return jsonify({"message": "User deleted successfully"}), 200
 
 @app.route("/logout")
 @login_required

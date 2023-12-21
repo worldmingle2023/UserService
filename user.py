@@ -28,3 +28,16 @@ class User(UserMixin):
             "_id": id_, "name": name, 
             "email": email, "profile_pic": profile_pic
         })
+
+    @staticmethod
+    def update(id_, name, email, profile_pic):
+        db = get_db()
+        db.users.update_one({
+            "_id": id_, "name": name, 
+            "email": email, "profile_pic": profile_pic
+        })
+
+    @staticmethod
+    def delete(user_id):
+        db = get_db()
+        db.users.delete_one({"_id": user_id})
