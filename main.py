@@ -4,7 +4,7 @@ import os
 import sqlite3
 
 # Third-party libraries
-from flask import Flask, redirect, request, url_for
+from flask import Flask, redirect, request, url_for, Response
 from flask_login import (
     LoginManager,
     current_user,
@@ -16,7 +16,7 @@ from oauthlib.oauth2 import WebApplicationClient
 import requests
 
 # Internal imports
-from db import init_db_command
+from db import init_db_command, update_user_profile, delete_user_profile
 from user import User
 
 # Configuration
@@ -57,14 +57,68 @@ def load_user(user_id):
 @app.route("/")
 def index():
     if current_user.is_authenticated:
-        return (
+        html_content = (
             "<p>Hello, {}! You're logged in! Email: {}</p>"
             "<div><p>Google Profile Picture:</p>"
             '<img src="{}" alt="Google profile pic"></img></div>'
-            '<a class="button" href="/logout">Logout</a>'.format(
-                current_user.name, current_user.email, current_user.profile_pic
-            )
+            '<a class="button" href="/logout">Logout</a>'
+            '<form id="update-form" action="/update_profile" method="post">'
+            '<input type="text" name="name" placeholder="Enter new name">'
+            '<button type="submit">Update Name</button>'
+            '</form>'
+            '<button id="delete-profile">Delete Profile</button>'
+            .format(current_user.name, current_user.email, current_user.profile_pic)
         )
+
+        update_script = """
+        <script>
+        document.getElementById('update-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+            var object = {};
+            formData.forEach(function(value, key){
+                object[key] = value;
+            });
+            var json = JSON.stringify(object);
+
+            fetch('/update_profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: json
+            }).then(response => {
+                if (response.ok) {
+                    alert('Profile updated successfully');
+                    window.location.href = '/';
+                } else {
+                    alert('Failed to update profile');
+                }
+            });
+        });
+        </script>
+        """
+
+        delete_script = """
+        <script>
+        document.getElementById('delete-profile').addEventListener('click', function() {
+            if(confirm('Are you sure you want to delete your profile?')) {
+                fetch('/delete_profile', {
+                    method: 'DELETE'
+                }).then(response => {
+                    if (response.ok) {
+                        alert('Profile deleted successfully');
+                        window.location.href = '/';
+                    } else {
+                        alert('Failed to delete profile');
+                    }
+                });
+            }
+        });
+        </script>
+        """
+
+        return html_content + update_script + delete_script
     else:
         return '<a class="button" href="/login">Google Login</a>'
     
@@ -117,14 +171,12 @@ def callback():
     # Parse the tokens!
     client.parse_request_body_response(json.dumps(token_response.json()))
 
-
     # Now that you have tokens (yay) let's find and hit the URL
     # from Google that gives you the user's profile information,
     # including their Google profile image and email
     userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
     uri, headers, body = client.add_token(userinfo_endpoint)
     userinfo_response = requests.get(uri, headers=headers, data=body)
-
 
     # You want to make sure their email is verified.
     # The user authenticated with Google, authorized your
@@ -160,6 +212,31 @@ def logout():
     logout_user()
     return redirect(url_for("index"))
 
+
+@app.route("/update_profile", methods=["PUT"])
+@login_required
+def update_profile():
+    new_name = request.json.get('name')
+    user_id = current_user.id
+
+    if not new_name:
+        return Response(json.dumps({"error": "Name is required"}), mimetype='application/json', status=400)
+
+    if update_user_profile(user_id, new_name) == 0:
+        return Response(json.dumps({"error": "Update failed"}), mimetype='application/json', status=500)
+
+    return Response(json.dumps({"message": "Name updated successfully"}), mimetype='application/json', status=200)
+
+
+@app.route("/delete_profile", methods=["DELETE"])
+@login_required
+def delete_profile():
+    user_id = current_user.id
+
+    if delete_user_profile(user_id) == 0:
+        return Response(json.dumps({"error": "Deletion failed"}), mimetype='application/json', status=500)
+
+    return Response(json.dumps({"message": "User deleted successfully"}), mimetype='application/json', status=200)
 
 if __name__ == "__main__":
     app.run(ssl_context="adhoc")
